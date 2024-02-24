@@ -1,18 +1,27 @@
 {
-  "name": "nuxt-app",
+  "name": "nuxt-electron-quick-start",
+  "version": "0.0.0",
   "private": true,
-  "type": "module",
+  "author": "草鞋没号 <308487730@qq.com>",
+  "license": "MIT",
+  "main": "dist-electron/main.js",
   "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "dev": "nuxi dev",
+    "build": "nuxi build --prerender && electron-builder"
   },
   "devDependencies": {
-    "@nuxt/devtools": "latest",
-    "nuxt": "^3.9.0",
-    "vue": "^3.3.13",
-    "vue-router": "^4.2.5"
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "nuxt": "^3.8.2",
+    "nuxt-electron": "^0.7.0",
+    "sass": "^1.71.1"
+  },
+  "dependencies": {
+    "@iconify-json/solar": "^1.1.9",
+    "@nuxt/ui": "^2.14.1",
+    "@nuxtjs/color-mode": "^3.3.2",
+    "@vueuse/core": "^10.8.0",
+    "@vueuse/nuxt": "^10.8.0",
+    "ws": "^8.16.0"
   }
 }
