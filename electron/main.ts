@@ -36,13 +36,6 @@ function twoViews() {
     },
   })
 
-  if (process.env.VITE_DEV_SERVER_URL) {
-    win.loadURL(process.env.VITE_DEV_SERVER_URL)
-    win.webContents.openDevTools()
-  } else {
-    win.loadFile(path.join(process.env.VITE_PUBLIC!, 'index.html'))
-  }
-
   const chatView = new BrowserView({
     webPreferences: {
       preload,
@@ -53,8 +46,8 @@ function twoViews() {
   win.addBrowserView(chatView)
 
   let wb = win.getBounds()
-  chatView.setBounds({ x: 48, y: 0, width: 0, height: wb.height - 56 })
-  chatView.setAutoResize({ width: false, height: false })
+  chatView.setBounds({ x: 48, y: 0, width: wb.width - 48, height: wb.height - 56 })
+  chatView.setAutoResize({ width: true, height: true })
   chatView.webContents.loadURL('https://www.youtube.com/live_chat?is_popout=1&v=jfKfPfyJRdk')
   chatView.webContents.openDevTools()
 
@@ -66,7 +59,27 @@ function twoViews() {
   scriptElement.innerHTML = \`${escapedScript}\`;
 
   document.body.appendChild(scriptElement);
-`)
+  `)
+
+  const uiView = new BrowserView({
+    webPreferences: {
+      contextIsolation: false,
+      nodeIntegration: true,
+    }
+  })
+
+  win.addBrowserView(uiView)
+
+  uiView.setBounds({ x: 0, y: 0, width: wb.width, height: wb.height - 56 })
+  uiView.setAutoResize({ width: true, height: true })
+
+  if (process.env.VITE_DEV_SERVER_URL) {
+    uiView.webContents.loadURL(process.env.VITE_DEV_SERVER_URL)
+    uiView.webContents.openDevTools()
+  } else {
+    uiView.webContents.loadFile(path.join(process.env.VITE_PUBLIC!, 'index.html'))
+  }
+  
 
   let currentURL = chatView.webContents.getURL();
 
@@ -77,15 +90,15 @@ function twoViews() {
   // Handle chat open state
   ipcMain.on('open-chat', async (event, arg) => {
     let wb = win.getBounds()
-    chatView.setBounds({ x: 48, y: 0, width: wb.width - 48, height: wb.height - 56 })
-    chatView.setAutoResize({ width: true, height: true })
+    uiView.setBounds({ x: 0, y: 0, width: 48, height: wb.height - 56 })
+    uiView.setAutoResize({ width: false, height: false })
   })
 
   // Handle navigating away from chat
   ipcMain.on('close-chat', async (event, arg) => {
     let wb = win.getBounds()
-    chatView.setBounds({ x: 48, y: 0, width: 0, height: wb.height - 56 })
-    chatView.setAutoResize({ width: false, height: false })
+    uiView.setBounds({ x: 0, y: 0, width: wb.width, height: wb.height - 56 })
+    uiView.setAutoResize({ width: true, height: true })
   })
 
   // Handle chat URL change
@@ -113,6 +126,18 @@ function twoViews() {
     switch (arg) {
       case 'message':
         chatView.webContents.executeJavaScript('addTestMessage()')
+        break
+      case 'superchat':
+        chatView.webContents.executeJavaScript('addTestSuperchat()')
+        break
+      case 'sticker':
+        chatView.webContents.executeJavaScript('addTestSticker()')
+        break
+      case 'membership':
+        chatView.webContents.executeJavaScript('addTestMember()')
+        break
+      case 'gift':
+        chatView.webContents.executeJavaScript('addTestGift()')
         break
     }
   })

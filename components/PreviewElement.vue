@@ -9,22 +9,22 @@
                     </UTooltip>
 
                     <UTooltip text="Test Superchat">
-                        <UButton icon="i-solar-dollar-linear" size="xl"
+                        <UButton @click="sendTest('superchat')" icon="i-solar-dollar-linear" size="xl"
                             color="primary" square variant="ghost" />
                     </UTooltip>
 
                     <UTooltip text="Test Sticker">
-                        <UButton icon="i-solar-smile-circle-linear" size="xl"
+                        <UButton @click="sendTest('sticker')" icon="i-solar-smile-circle-linear" size="xl"
                             color="primary" square variant="ghost" />
                     </UTooltip>
 
                     <UTooltip text="Test Membership">
-                        <UButton icon="i-solar-star-linear" size="xl"
+                        <UButton @click="sendTest('membership')" icon="i-solar-star-linear" size="xl"
                             color="primary" square variant="ghost" />
                     </UTooltip>
 
                     <UTooltip text="Test Gift Membership">
-                        <UButton icon="i-solar-gift-linear" size="xl"
+                        <UButton @click="sendTest('gift')" icon="i-solar-gift-linear" size="xl"
                             color="primary" square variant="ghost" />
                     </UTooltip>
                 </div>
