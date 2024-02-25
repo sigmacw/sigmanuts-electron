@@ -1,22 +1,15 @@
 import { app, BrowserWindow, BrowserView } from 'electron'
 import { ipcMain } from "electron"
-import './server'
+import './websocket'
+import './httpserver'
+import './storage'
+
 import path from 'path'
 
 const fs = require('fs');
 console.log('Started...');
 
-// require('./events.ts')
-
-// The built directory structure
-//
-// ├─┬ dist-electron
-// │ ├─┬ main
-// │ │ └── index.js
-// │ ├─┬ preload
-// │ │ └── index.js
-// │ ├─┬ renderer
-// │ │ └── index.html
+// require('./events.ts');
 
 process.env.ROOT = path.join(__dirname, '..')
 process.env.DIST = path.join(process.env.ROOT, 'dist-electron')
@@ -27,7 +20,7 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
 let win: BrowserWindow
 const preload = path.join(process.env.DIST, 'preload.js')
-const script = fs.readFileSync(path.join(process.env.DIST, 'script.js'), 'utf8')
+const script = fs.readFileSync(path.join(process.env.ROOT, 'electron/script.js'), 'utf8')
 
 function twoViews() {
   win = new BrowserWindow({
@@ -50,14 +43,30 @@ function twoViews() {
     win.loadFile(path.join(process.env.VITE_PUBLIC!, 'index.html'))
   }
 
-  const chatView = new BrowserView()
+  const chatView = new BrowserView({
+    webPreferences: {
+      preload,
+      contextIsolation: false,
+      nodeIntegration: true,
+    }
+  })
   win.addBrowserView(chatView)
-  chatView.setBounds({ x: 48, y: 0, width: 752, height: 0 })
-  chatView.setAutoResize({ width: true, height: false })
+
+  let wb = win.getBounds()
+  chatView.setBounds({ x: 48, y: 0, width: 0, height: wb.height - 56 })
+  chatView.setAutoResize({ width: false, height: false })
   chatView.webContents.loadURL('https://www.youtube.com/live_chat?is_popout=1&v=jfKfPfyJRdk')
   chatView.webContents.openDevTools()
 
-  chatView.webContents.executeJavaScript(script)
+  var escapedScript = script.replace(/`/g, '\\`');
+  escapedScript = escapedScript.replace(/\$/g, '\\$');
+
+  chatView.webContents.executeJavaScript(`
+  var scriptElement = document.createElement('script');
+  scriptElement.innerHTML = \`${escapedScript}\`;
+
+  document.body.appendChild(scriptElement);
+`)
 
   let currentURL = chatView.webContents.getURL();
 
@@ -74,14 +83,21 @@ function twoViews() {
 
   // Handle navigating away from chat
   ipcMain.on('close-chat', async (event, arg) => {
-    chatView.setBounds({ x: 48, y: 0, width: 752, height: 0 })
-    chatView.setAutoResize({ width: true, height: false })
+    let wb = win.getBounds()
+    chatView.setBounds({ x: 48, y: 0, width: 0, height: wb.height - 56 })
+    chatView.setAutoResize({ width: false, height: false })
   })
 
   // Handle chat URL change
   ipcMain.on('url-change', async (event, arg) => {
     currentURL = arg;
     chatView.webContents.loadURL(arg)
+    chatView.webContents.executeJavaScript(`
+    var scriptElement = document.createElement('script');
+    scriptElement.innerHTML = \`${escapedScript}\`;
+
+    document.body.appendChild(scriptElement);
+    `)
   })
 
   ipcMain.on('toggle-login', async (event, arg) => {
@@ -91,6 +107,14 @@ function twoViews() {
 
   ipcMain.on('restore-url', async (event, arg) => {
     chatView.webContents.loadURL(currentURL)
+  })
+
+  ipcMain.on('test-item', async (event, arg) => {
+    switch (arg) {
+      case 'message':
+        chatView.webContents.executeJavaScript('addTestMessage()')
+        break
+    }
   })
 
   app.on('window-all-closed', () => {

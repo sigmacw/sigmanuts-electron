@@ -4,7 +4,7 @@
             <div class="actions__wrapper">
                 <div class="actions__test-buttons">
                     <UTooltip text="Test Message">
-                        <UButton icon="i-solar-chat-line-broken" size="xl"
+                        <UButton @click="sendTest('message')" icon="i-solar-chat-line-broken" size="xl"
                             color="primary" square variant="ghost" />
                     </UTooltip>
 
@@ -45,11 +45,25 @@
 
             </div>
         </div>
+        <div class="preview-frame">
+            <iframe style="height: 100%; width: 100%;" :src="iframeURL"></iframe>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import { ipcRenderer } from 'electron';
 
+const currentWidget = useState('current-widget')
+const iframeURL = ref(`http://localhost:6969/${currentWidget.value}/widget.html`)
+
+const sendTest = (item: string): void => {
+    ipcRenderer.send('test-item', item)
+}
+
+watch(currentWidget, (val) => {
+    iframeURL.value = `http://localhost:6969/${val}/widget.html`
+})
 </script>
 
 <style lang="scss" scoped>
@@ -57,7 +71,11 @@
     width: 100%;
     height: 100%;
 
+    display: grid;
+    grid-template-rows: 100px calc(100% - 100px);
+
     border-radius: 1rem;
+    overflow: hidden;
 
     .preview-actions {
         display: grid;

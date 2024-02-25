@@ -50,7 +50,7 @@ const isDark = computed({
 const openYTChat = () => {
     isChatOpen.value = true;
     ipcRenderer.send('open-chat', isChatOpen.value);
-    
+
     if (currentTab.value === 'login') {
         ipcRenderer.send('restore-url', isChatOpen.value);
     }
@@ -78,7 +78,7 @@ const openLogIn = () => {
 }
 
 const toggleDarkMode = () => {
-
+    isDark.value = !isDark.value;
 }
 
 </script>
