@@ -51,9 +51,35 @@ function waitForSocketConnection(socket, callback) {
         }, 100); // wait 5 milisecond for the connection...
 }
 
+let processedMessages = [];
+let previousMessage = "";
+
 webSocket.onmessage = function (obj) {
     var evt = JSON.parse(obj.data);
-    console.log(evt)
+    
+    if (typeof evt === "string") {
+        const response = JSON.parse(evt);
+        const actions = response.continuationContents.liveChatContinuation.actions;
+
+        if (!actions) return
+
+        for (key in actions) {
+            const _id = actions[key].addChatItemAction.clientId;
+
+            if (previousMessage !== _id && processedMessages.length > 10) {
+                processedMessages = [];
+            }  
+
+            if (processedMessages.includes(_id)) continue;
+
+            processedMessages.push(_id);
+            previousMessage = _id;
+
+            console.log('__________')
+            console.log(actions[key].addChatItemAction.item)
+            console.log(actions[key].addChatItemAction.item.liveChatTextMessageRenderer.message.runs[0].text)
+        }
+    }
 
     if (evt.listener === "widget-load" && (evt.name === widgetName || evt.name === "all")) {
         console.log('pog')

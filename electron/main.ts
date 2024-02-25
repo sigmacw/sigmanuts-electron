@@ -1,5 +1,7 @@
 import { app, BrowserWindow, BrowserView } from 'electron'
 import { ipcMain } from "electron"
+import eventEmitter from './eventEmitter';
+
 import './websocket'
 import './httpserver'
 import './storage'
@@ -20,7 +22,7 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
 let win: BrowserWindow
 const preload = path.join(process.env.DIST, 'preload.js')
-const script = fs.readFileSync(path.join(process.env.ROOT, 'electron/script.js'), 'utf8')
+const script = fs.readFileSync(path.join(__dirname, 'script.js'), 'utf8')
 
 function twoViews() {
   win = new BrowserWindow({
@@ -49,7 +51,7 @@ function twoViews() {
   chatView.setBounds({ x: 48, y: 0, width: wb.width - 48, height: wb.height - 56 })
   chatView.setAutoResize({ width: true, height: true })
   chatView.webContents.loadURL('https://www.youtube.com/live_chat?is_popout=1&v=jfKfPfyJRdk')
-  //chatView.webContents.openDevTools()
+  chatView.webContents.openDevTools()
 
   var escapedScript = script.replace(/`/g, '\\`');
   escapedScript = escapedScript.replace(/\$/g, '\\$');
@@ -142,6 +144,28 @@ function twoViews() {
     }
   })
 
+  try {
+    chatView.webContents.debugger.attach('1.3');
+  } catch (err) {
+    console.log('Debugger attach failed: ', err);
+  }
+  
+  chatView.webContents.debugger.on('detach', (event, reason) => {
+    console.log('Debugger detached due to: ', reason);
+  });
+  
+  chatView.webContents.debugger.on('message', (event, method, params) => {
+    if (method === 'Network.responseReceived') {
+      chatView.webContents.debugger.sendCommand('Network.getResponseBody', { requestId: params.requestId }).then(function(response) {
+        if (response.base64Encoded) return
+
+        eventEmitter.emit('dataReceived', response.body)
+      });
+    }
+  })
+    
+  chatView.webContents.debugger.sendCommand('Network.enable');
+
   app.on('window-all-closed', () => {
     win.removeBrowserView(chatView)
     app.quit()
@@ -149,7 +173,3 @@ function twoViews() {
 }
 
 app.whenReady().then(twoViews)
-
-/* ipcMain.handle('toggle-chat', async (event, arg) => {
-  console.log(arg)
-}) */

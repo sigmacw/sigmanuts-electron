@@ -1,9 +1,6 @@
 //console.log('HELLO');
 
 function loadScript(scriptUrl) {
-    const script = document.createElement('script');
-    script.src = scriptUrl;
-    document.body.appendChild(script);
 
     //disable scrolling and changing Top Chat
     if (document.getElementById("item-scroller")) {
@@ -17,15 +14,6 @@ function loadScript(scriptUrl) {
     if (document.getElementById("overflow")) {
         document.getElementById("overflow").style.display = "none";
     }
-
-    return new Promise((res, rej) => {
-        script.onload = function () {
-            res();
-        }
-        script.onerror = function () {
-            rej();
-        }
-    });
 }
 
 function sendPastChats(widgetName = "", widgetCode = "", amount = 20) {
@@ -521,6 +509,7 @@ function checkDeletedNodes() {
 }
 
 function startStream() {
+    loadScript('');
     const callback = async (mutationList, observer) => {
         console.log(mutationList);
         await sleep(messageDelay);
