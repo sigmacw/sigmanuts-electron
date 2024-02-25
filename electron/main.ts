@@ -49,7 +49,7 @@ function twoViews() {
   chatView.setBounds({ x: 48, y: 0, width: wb.width - 48, height: wb.height - 56 })
   chatView.setAutoResize({ width: true, height: true })
   chatView.webContents.loadURL('https://www.youtube.com/live_chat?is_popout=1&v=jfKfPfyJRdk')
-  chatView.webContents.openDevTools()
+  //chatView.webContents.openDevTools()
 
   var escapedScript = script.replace(/`/g, '\\`');
   escapedScript = escapedScript.replace(/\$/g, '\\$');
@@ -75,7 +75,7 @@ function twoViews() {
 
   if (process.env.VITE_DEV_SERVER_URL) {
     uiView.webContents.loadURL(process.env.VITE_DEV_SERVER_URL)
-    uiView.webContents.openDevTools()
+    //uiView.webContents.openDevTools()
   } else {
     uiView.webContents.loadFile(path.join(process.env.VITE_PUBLIC!, 'index.html'))
   }
