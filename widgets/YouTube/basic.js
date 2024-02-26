@@ -21,10 +21,14 @@ $(document).ready(function () {
 
         if (obj.detail.listener !== "youtube-basic") return;
 
-        let htmlText = obj.detail.event.html;
+        
+        let htmlText = obj.detail.event.renderedText;
+        let id = obj.detail.event.data.msgId;
         let animate = true;
         if (obj.detail.event.type == "member-gifted") animate = false;
-        addElement(htmlText, animate);
+
+        console.log(obj);
+        addElement(htmlText, animate, id);
     });
 
     window.addEventListener('onWidgetLoad', function (obj) {
@@ -69,20 +73,66 @@ function removeMessage(msgId) {
     }
 }
 
-function addElement(htmlText, animate) {
+function addElement(htmlText, animate, id) {
     if (!htmlText) return;
-    element = $.parseHTML(htmlText);
+    element = `
+    <yt-live-chat-text-message-renderer
+        class="style-scope yt-live-chat-item-list-renderer"
+        id="${id}" author-is-owner=""
+        author-type="owner">
+        <!--css-build:shady-->
+        <yt-img-shadow id="author-photo"
+            class="no-transition style-scope yt-live-chat-text-message-renderer"
+            height="24" width="24"
+            style="background-color: transparent;"
+            loaded="">
+            <!--css-build:shady--><img id="img"
+                draggable="false"
+                class="style-scope yt-img-shadow" alt=""
+                height="24" width="24"
+                src="./Sigmanuts _ Youtube Basic Chat_files/channels4_profile.jpg"></yt-img-shadow>
+        <div id="content"
+            class="style-scope yt-live-chat-text-message-renderer">
+            <span id="timestamp"
+                class="style-scope yt-live-chat-text-message-renderer">00:00
+                PM</span>
+            <yt-live-chat-author-chip
+                class="style-scope yt-live-chat-text-message-renderer"
+                is-highlighted="">
+                <!--css-build:shady--><span
+                    id="prepend-chat-badges"
+                    class="style-scope yt-live-chat-author-chip"></span><span
+                    id="author-name" dir="auto"
+                    class="owner style-scope yt-live-chat-author-chip">Broadcaster
+                    Name<span id="chip-badges"
+                        class="style-scope yt-live-chat-author-chip"></span></span><span
+                    id="chat-badges"
+                    class="style-scope yt-live-chat-author-chip">
+                    <yt-live-chat-author-badge-renderer
+                        class="style-scope yt-live-chat-author-chip"
+                        type="owner">
+                        <!--css-build:shady-->
+                        <div id="image"
+                            class="style-scope yt-live-chat-author-badge-renderer">
+                        </div>
+                    </yt-live-chat-author-badge-renderer>
+                </span></yt-live-chat-author-chip>&#8203;<span
+                id="message" dir="auto"
+                class="style-scope yt-live-chat-text-message-renderer">${htmlText}</span>
+                <span
+                id="deleted-state"
+                class="style-scope yt-live-chat-text-message-renderer"></span><a
+                id="show-original"
+                href="http://localhost:6969/widgets/YouTube/widget.html#"
+                class="style-scope yt-live-chat-text-message-renderer"></a>
+        </div>
+    </yt-live-chat-text-message-renderer>
+    `;
 
-    //Some messages have %3D at the end of the id, breaking the code
-    //mem
-    let id = $(element).attr("id");
-    id = id.replaceAll(`%3D`, "");
-    $(element).attr("id", id);
-
-    $(element).appendTo('#items');
+    $('#items').append(element);
 
     if (animate) {
-        let height = $(element).outerHeight();
+        let height = $(`#${id}`).outerHeight();
 
         $('#items').finish().css("transform", `translateY(${height}px)`).animate(
             {

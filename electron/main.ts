@@ -2,6 +2,8 @@ import { app, BrowserWindow, BrowserView } from 'electron'
 import { ipcMain } from "electron"
 import eventEmitter from './eventEmitter';
 
+import MessageEvent from './chat_events/messageEvent';
+
 import './websocket'
 import './httpserver'
 import './storage'
@@ -56,12 +58,12 @@ function twoViews() {
   var escapedScript = script.replace(/`/g, '\\`');
   escapedScript = escapedScript.replace(/\$/g, '\\$');
 
-  chatView.webContents.executeJavaScript(`
+  /* chatView.webContents.executeJavaScript(`
   var scriptElement = document.createElement('script');
   scriptElement.innerHTML = \`${escapedScript}\`;
 
   document.body.appendChild(scriptElement);
-  `)
+  `) */
 
   const uiView = new BrowserView({
     webPreferences: {
@@ -81,7 +83,7 @@ function twoViews() {
   } else {
     uiView.webContents.loadFile(path.join(process.env.VITE_PUBLIC!, 'index.html'))
   }
-  
+
 
   let currentURL = chatView.webContents.getURL();
 
@@ -149,21 +151,22 @@ function twoViews() {
   } catch (err) {
     console.log('Debugger attach failed: ', err);
   }
-  
+
   chatView.webContents.debugger.on('detach', (event, reason) => {
     console.log('Debugger detached due to: ', reason);
   });
-  
+
   chatView.webContents.debugger.on('message', (event, method, params) => {
     if (method === 'Network.responseReceived') {
-      chatView.webContents.debugger.sendCommand('Network.getResponseBody', { requestId: params.requestId }).then(function(response) {
-        if (response.base64Encoded) return
-
-        eventEmitter.emit('dataReceived', response.body)
-      });
+      chatView.webContents.debugger.sendCommand('Network.getResponseBody', { requestId: params.requestId })
+        .then(function (response) {
+          if (response.base64Encoded) return
+          processResponseBody(response.body);
+        })
+        .catch(() => {});
     }
   })
-    
+
   chatView.webContents.debugger.sendCommand('Network.enable');
 
   app.on('window-all-closed', () => {
@@ -173,3 +176,35 @@ function twoViews() {
 }
 
 app.whenReady().then(twoViews)
+
+let processedMessages: Array<string> = [];
+let previousMessage: string = "";
+
+function processResponseBody(data: string): any {
+  const actions = JSON.parse(data).continuationContents.liveChatContinuation.actions;
+
+  if (!actions) return
+
+  for (let key in actions) {
+    const _id = actions[key].addChatItemAction.clientId;
+
+    if (previousMessage !== _id && processedMessages.length > 10) {
+      processedMessages = [];
+    }
+
+    if (processedMessages.includes(_id)) continue;
+
+    processedMessages.push(_id);
+    previousMessage = _id;
+
+    const msgEvent = new MessageEvent(actions[key].addChatItemAction.item.liveChatTextMessageRenderer, "message");
+    const msgobj = msgEvent.getMessageObject();
+
+    eventEmitter.emit('dataReceived', msgobj);
+
+    const ytEvent = new MessageEvent(actions[key].addChatItemAction.item.liveChatTextMessageRenderer, "youtube-basic");
+    const basicobj = ytEvent.getMessageObject();
+
+    eventEmitter.emit('dataReceived', basicobj);
+  }
+}

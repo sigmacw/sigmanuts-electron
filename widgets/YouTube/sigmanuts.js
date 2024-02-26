@@ -57,7 +57,7 @@ let previousMessage = "";
 webSocket.onmessage = function (obj) {
     var evt = JSON.parse(obj.data);
     
-    if (typeof evt === "string") {
+    /* if (typeof evt === "string") {
         const response = JSON.parse(evt);
         const actions = response.continuationContents.liveChatContinuation.actions;
 
@@ -79,7 +79,7 @@ webSocket.onmessage = function (obj) {
             console.log(actions[key].addChatItemAction.item)
             console.log(actions[key].addChatItemAction.item.liveChatTextMessageRenderer.message.runs[0].text)
         }
-    }
+    } */
 
     if (evt.listener === "widget-load" && (evt.name === widgetName || evt.name === "all")) {
         console.log('pog')
@@ -105,7 +105,7 @@ webSocket.onmessage = function (obj) {
         
         if(evt.listener === "message")
         {
-            evt.event.data.text = decodeHtml(evt.event.data.text)
+            evt.event.data.text = decodeHtml(evt.event.renderedText)
         }        
         const event = new CustomEvent('onEventReceived', {
             detail: {
